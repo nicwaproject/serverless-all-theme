@@ -1,0 +1,21 @@
+{
+  "name": "message-form-serverless",
+  "version": "1.0.0",
+  "description": "Serverless function to handle wedding invitation messages",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",      
+    "mongoose": "^8.15.1",
+    "dotenv": "^16.5.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "author": "Muhammad Riziq Zhapran",
+  "license": "ISC"
+}
