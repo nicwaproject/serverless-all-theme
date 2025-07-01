@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+// Koneksi MongoDB (cached supaya nggak reconnect tiap request)
 let conn = null;
 
 const messageSchema = new mongoose.Schema({
@@ -17,7 +18,9 @@ const messageSchema = new mongoose.Schema({
   }
 });
 
-const handler = async (req, res) => {
+// Serverless Handler
+export default async function handler(req, res) {
+  // Pastikan koneksi hanya sekali
   if (!conn) {
     conn = await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
@@ -25,20 +28,21 @@ const handler = async (req, res) => {
     });
   }
 
+  // Gunakan model (hindari re-deklarasi)
   const Message = mongoose.models.Message || mongoose.model('Message', messageSchema, 'allTheme1');
 
   if (req.method === 'POST') {
     const { name, message, coupleId, attendance } = req.body;
 
     if (!name || !message || !coupleId) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: 'Missing required fields.' });
     }
 
     const newMessage = new Message({ name, message, coupleId, attendance });
 
     try {
       await newMessage.save();
-      return res.json({ status: 'Message saved successfully!' });
+      return res.status(200).json({ status: 'Message saved successfully!' });
     } catch (err) {
       return res.status(500).json({ error: 'Failed to save message.' });
     }
@@ -47,7 +51,7 @@ const handler = async (req, res) => {
     const { coupleId, theme } = req.query;
 
     if (!coupleId) {
-      return res.status(400).json({ error: 'coupleId is required' });
+      return res.status(400).json({ error: 'coupleId is required.' });
     }
 
     try {
@@ -59,7 +63,7 @@ const handler = async (req, res) => {
         const insyaallah = messages.filter(m => m.attendance === 'Insyaallah').length;
         const ragu = messages.filter(m => m.attendance === 'Ragu').length;
 
-        return res.json({
+        return res.status(200).json({
           hadir,
           tidakHadir,
           insyaallah,
@@ -72,19 +76,20 @@ const handler = async (req, res) => {
           }))
         });
       } else {
-        return res.json(messages.map(m => ({
-          name: m.name,
-          message: m.message,
-          attendance: m.attendance,
-          createdAt: m.createdAt
-        })));
+        return res.status(200).json(
+          messages.map(m => ({
+            name: m.name,
+            message: m.message,
+            attendance: m.attendance,
+            createdAt: m.createdAt
+          }))
+        );
       }
     } catch (err) {
       return res.status(500).json({ error: 'Failed to fetch messages.' });
     }
-  } else {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-};
 
-export default handler;
+  } else {
+    return res.status(405).json({ error: 'Method not allowed.' });
+  }
+}
