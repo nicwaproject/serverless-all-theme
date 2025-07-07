@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
 
-// Koneksi MongoDB (cached supaya nggak reconnect tiap request)
+// Cached connection
 let conn = null;
 
+// Schema
 const messageSchema = new mongoose.Schema({
   name: String,
   message: String,
@@ -18,9 +19,18 @@ const messageSchema = new mongoose.Schema({
   }
 });
 
-// Serverless Handler
 export default async function handler(req, res) {
-  // Pastikan koneksi hanya sekali
+  // Tambah header CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // Koneksi Mongo
   if (!conn) {
     conn = await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
@@ -28,7 +38,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // Gunakan model (hindari re-deklarasi)
+  // Model
   const Message = mongoose.models.Message || mongoose.model('Message', messageSchema, 'allTheme1');
 
   if (req.method === 'POST') {
